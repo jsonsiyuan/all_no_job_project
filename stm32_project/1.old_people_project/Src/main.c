@@ -278,7 +278,7 @@ int main(void)
   rfid_antenna_num=    0;
  
 	
-  HAL_UART_Transmit_IT(&huart2,(uint8_t *)cmd_set_work_antenna_1, sizeof(cmd_set_work_antenna_1));
+  //HAL_UART_Transmit_IT(&huart2,(uint8_t *)cmd_set_work_antenna_1, sizeof(cmd_set_work_antenna_1));
 	//HAL_UART_Transmit(&huart2,(uint8_t *)cmd_set_work_antenna_1, sizeof(cmd_set_work_antenna_1),2000);
 	
   NDevice data;
@@ -305,6 +305,10 @@ int main(void)
 		if(0==gprs_work_flag)
 		{
 			HAL_UART_Transmit(&huart1,(uint8_t *)gprs_start_cmd, sizeof(gprs_start_cmd),2000);
+		}
+		else
+		{
+			HAL_UART_Transmit_IT(&huart2,(uint8_t *)cmd_set_work_antenna_1, sizeof(cmd_set_work_antenna_1));
 		}
   	memset(gprs_pack,0,sizeof(gprs_pack));
 	if( gprs_Checkonepack(gprs_pack)>0)
