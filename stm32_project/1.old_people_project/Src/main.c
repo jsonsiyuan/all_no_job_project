@@ -99,6 +99,7 @@ GPRS_DATA_T gprs_data={
 	.Command_flag=0x04,
 	.end='}',
 };
+#define debug 0
 
 #define OUT 0x0F
 #define IN    0xF0
@@ -128,6 +129,7 @@ uint8_t gprs_ack_fail[6]={'{',0x02,0xf0,0x00,0x00,'}'};
 uint8_t gprs_send_length;
 
 uint8_t gprs_work_flag=0;
+uint32_t gprs_work_num=0;
 
 
 
@@ -232,7 +234,6 @@ static unsigned int crc32( const unsigned char *buf, unsigned int size)
  
      return crc^0xFFFFFFFF;
 }
-#define debug 0
 
 /* USER CODE END 0 */
 
@@ -278,13 +279,13 @@ int main(void)
   rfid_antenna_num=    0;
  
 	
-  //HAL_UART_Transmit_IT(&huart2,(uint8_t *)cmd_set_work_antenna_1, sizeof(cmd_set_work_antenna_1));
+  HAL_UART_Transmit_IT(&huart2,(uint8_t *)cmd_set_work_antenna_1, sizeof(cmd_set_work_antenna_1));
 	//HAL_UART_Transmit(&huart2,(uint8_t *)cmd_set_work_antenna_1, sizeof(cmd_set_work_antenna_1),2000);
 	
   NDevice data;
 	gprs_send_length=sizeof(gprs_start_cmd);
   memcpy(gprs_resendbuff,gprs_start_cmd,sizeof(gprs_start_cmd));
-  HAL_UART_Transmit(&huart1,(uint8_t *)gprs_start_cmd, sizeof(gprs_start_cmd),2000);
+  //HAL_UART_Transmit(&huart1,(uint8_t *)gprs_start_cmd, sizeof(gprs_start_cmd),2000);
 	if(debug)
 	{
 		printf("### start\r\n");
@@ -304,11 +305,11 @@ int main(void)
     	HAL_Delay(30);
 		if(0==gprs_work_flag)
 		{
-			HAL_UART_Transmit(&huart1,(uint8_t *)gprs_start_cmd, sizeof(gprs_start_cmd),2000);
-		}
-		else
-		{
-			HAL_UART_Transmit_IT(&huart2,(uint8_t *)cmd_set_work_antenna_1, sizeof(cmd_set_work_antenna_1));
+			if(0==(gprs_work_num%120))
+			{
+				HAL_UART_Transmit(&huart1,(uint8_t *)gprs_start_cmd, sizeof(gprs_start_cmd),2000);
+			}
+			gprs_work_num++;
 		}
   	memset(gprs_pack,0,sizeof(gprs_pack));
 	if( gprs_Checkonepack(gprs_pack)>0)
@@ -339,6 +340,11 @@ int main(void)
 				HAL_UART_Transmit(&huart1,gprs_ack_ok,sizeof(gprs_ack_ok),2000 );
 			break;
 			case 0x02:
+					if(debug)
+	{
+		printf("### start\r\n");
+		//HAL_UART_Transmit_IT(&huart1,"0x01\r\n", 6);
+	}
 				if(gprs_pack[2]==0xF0)
 				{
 					HAL_UART_Transmit_IT(&huart1,(uint8_t *)gprs_resendbuff, gprs_send_length);
@@ -663,13 +669,8 @@ uint8_t find_crc_index(uint32_t crc_data)
 		{
 			return i;
 		}
-		else
-		{
-			return 0xff;
-		}
-		
 	}
-	
+	return 0xff;
 }
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
